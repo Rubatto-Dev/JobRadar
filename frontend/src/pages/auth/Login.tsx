@@ -2,11 +2,15 @@ import { motion } from 'framer-motion'
 import { AlertCircle, ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { api, ApiError } from '../../services/api'
+import { useAuth } from '../../hooks/useAuth'
+import { useToast } from '../../hooks/useToast'
 import { fadeUp, stagger } from '../../lib/motion'
+import { ApiError } from '../../services/api'
 
 export default function Login() {
   const navigate = useNavigate()
+  const { login } = useAuth()
+  const toast = useToast()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -19,9 +23,8 @@ export default function Login() {
     setLoading(true)
 
     try {
-      const result = await api.auth.login({ email, password })
-      localStorage.setItem('access_token', result.access_token)
-      localStorage.setItem('refresh_token', result.refresh_token)
+      await login(email, password)
+      toast.success('Login realizado com sucesso!')
       navigate('/dashboard')
     } catch (err) {
       if (err instanceof ApiError) {

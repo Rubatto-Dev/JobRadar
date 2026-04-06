@@ -10,6 +10,7 @@ import {
   User,
 } from 'lucide-react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
 
 const NAV_ITEMS = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -25,10 +26,10 @@ const BOTTOM_ITEMS = [
 
 export default function AppShell() {
   const navigate = useNavigate()
+  const { user, logout } = useAuth()
 
   function handleLogout() {
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('refresh_token')
+    logout()
     navigate('/login')
   }
 
@@ -106,7 +107,7 @@ export default function AppShell() {
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-radar-100 text-radar-700">
                 <User size={14} />
               </div>
-              <span className="text-sm font-medium text-ink">Guilherme</span>
+              <span className="text-sm font-medium text-ink">{user?.name?.split(' ')[0] ?? 'Usuario'}</span>
             </div>
           </div>
         </header>

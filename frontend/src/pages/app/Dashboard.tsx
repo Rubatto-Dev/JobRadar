@@ -11,6 +11,9 @@ import {
   Zap,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
+import { useDashboard } from '../../hooks/useDashboard'
+import { DashboardSkeleton } from '../../components/ui/Skeleton'
 import { fadeUp, stagger } from '../../lib/motion'
 
 const STATS = [
@@ -148,11 +151,19 @@ function JobCard({ job, i }: { job: (typeof RECOMMENDED)[0]; i: number }) {
 }
 
 export default function Dashboard() {
+  const { user } = useAuth()
+  const { data: _dashboard, loading } = useDashboard()
+  const firstName = user?.name?.split(' ')[0] ?? 'Usuario'
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
+
+  if (loading) return <DashboardSkeleton />
+
   return (
     <motion.div initial="hidden" animate="visible" variants={stagger} className="space-y-8">
       {/* Header */}
       <motion.div variants={fadeUp} custom={0}>
-        <h1 className="font-display text-2xl font-bold tracking-tight text-ink">Bom dia, Guilherme</h1>
+        <h1 className="font-display text-2xl font-bold tracking-tight text-ink">{greeting}, {firstName}</h1>
         <p className="mt-1 text-sm text-ink-muted">Aqui esta o resumo da sua busca por vagas.</p>
       </motion.div>
 
