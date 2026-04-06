@@ -1,0 +1,20 @@
+pt-br:
+  errors:
+    invalid_credentials: "Email ou senha inválidos"
+    email_already_exists: "Email já cadastrado"
+    weak_password: "A senha não atende aos requisitos mínimos"
+    email_not_verified: "Email não verificado"
+    account_deactivated: "Conta desativada"
+    invalid_token: "Token inválido ou expirado"
+    token_blacklisted: "Token foi revogado"
+    lgpd_consent_required: "Consentimento LGPD é obrigatório"
+    rate_limit_exceeded: "Limite de requisições excedido. Tente novamente em {retry_after} segundos"
+    not_found: "Recurso não encontrado"
+    forbidden: "Acesso negado"
+    validation_error: "Erro de validação"
+  messages:
+    email_verified: "Email verificado com sucesso"
+    password_reset: "Senha redefinida com sucesso"
+    forgot_password: "Se o email existir, um link de redefinição foi enviado"
+    account_deleted: "Conta excluída com sucesso"
+    confirmation_sent: "Email de confirmação enviado"
