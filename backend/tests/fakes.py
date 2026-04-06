@@ -81,3 +81,38 @@ class FakeEmail:
 
     async def send_reset_password_email(self, email: str, token: str) -> None:
         self.sent.append({"type": "reset", "email": email, "token": token})
+
+
+class FakeArea:
+    """Minimal fake Area for unit tests."""
+
+    def __init__(self, **kwargs: Any) -> None:
+        self.id: UUID = kwargs.get("id", uuid.uuid4())
+        self.name_pt: str = kwargs.get("name_pt", "Tecnologia")
+        self.name_en: str | None = kwargs.get("name_en", "Technology")
+        self.slug: str = kwargs.get("slug", "tecnologia")
+        self.is_active: bool = kwargs.get("is_active", True)
+
+
+class FakeAreaRepository:
+    def __init__(self, areas: list[FakeArea] | None = None) -> None:
+        self._areas: dict[UUID, FakeArea] = {}
+        for area in areas or []:
+            self._areas[area.id] = area
+
+    async def list_active(self) -> list[FakeArea]:
+        return [a for a in self._areas.values() if a.is_active]
+
+    async def get_by_id(self, area_id: UUID) -> FakeArea | None:
+        return self._areas.get(area_id)
+
+    async def create(self, **kwargs: Any) -> FakeArea:
+        area = FakeArea(**kwargs)
+        self._areas[area.id] = area
+        return area
+
+    async def update(self, area_id: UUID, **kwargs: Any) -> FakeArea:
+        area = self._areas[area_id]
+        for key, value in kwargs.items():
+            setattr(area, key, value)
+        return area
