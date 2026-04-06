@@ -44,31 +44,11 @@ _EXCEPTION_MAP: dict[type[DomainError], tuple[int, str | None]] = {
 }
 
 
-class _FakeRedis:
-    """Placeholder until Redis dependency is wired."""
-
-    async def set(self, key: str, value: str, ex: int | None = None) -> None:
-        pass
-
-    async def get(self, key: str) -> str | None:
-        return None
-
-    async def exists(self, key: str) -> bool:
-        return False
-
-
-class _FakeEmail:
-    """Placeholder until Resend adapter is wired."""
-
-    async def send_verification_email(self, email: str, token: str) -> None:
-        pass
-
-    async def send_reset_password_email(self, email: str, token: str) -> None:
-        pass
-
-
 def _get_auth_service(db: AsyncSession = Depends(get_db)) -> AuthService:
-    return AuthService(UserRepository(db), _FakeRedis(), _FakeEmail())
+    from src.core.redis import RedisService, get_redis
+    from src.services.email_service import ResendEmailService
+
+    return AuthService(UserRepository(db), RedisService(get_redis()), ResendEmailService())
 
 
 def _handle(e: DomainError) -> HTTPException:

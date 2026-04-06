@@ -15,19 +15,10 @@ from src.services.user_service import UserService
 router = APIRouter(prefix="/api/v1/users", tags=["users"])
 
 
-class _FakeRedis:
-    async def set(self, key: str, value: str, ex: int | None = None) -> None:
-        pass
-
-    async def get(self, key: str) -> str | None:
-        return None
-
-    async def exists(self, key: str) -> bool:
-        return False
-
-
 def _get_user_service(db: AsyncSession = Depends(get_db)) -> UserService:
-    return UserService(UserRepository(db), _FakeRedis())
+    from src.core.redis import RedisService, get_redis
+
+    return UserService(UserRepository(db), RedisService(get_redis()))
 
 
 @router.get("/me", response_model=UserProfile)
