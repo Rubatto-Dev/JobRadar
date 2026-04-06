@@ -1,40 +1,59 @@
 import { motion } from 'framer-motion'
-import { ArrowRight, TrendingUp } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { fadeUp, stagger } from '../../lib/motion'
 
 export default function CTA() {
   return (
-    <section className="border-t border-border bg-ink py-24">
+    <section className="relative overflow-hidden border-t border-border bg-radar-950 py-28">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute top-0 left-1/2 h-[500px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-radar-500/15 blur-[100px]" />
+        <div className="absolute bottom-0 right-0 h-[300px] w-[300px] translate-x-1/4 translate-y-1/4 rounded-full bg-indigo-500/10 blur-[80px]" />
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
+            backgroundSize: '40px 40px',
+          }}
+        />
+      </div>
+
       <motion.div
-        className="mx-auto max-w-2xl px-6 text-center"
+        className="relative mx-auto max-w-2xl px-6 text-center"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true }}
         variants={stagger}
       >
-        <motion.div variants={fadeUp} custom={0}>
-          <TrendingUp size={32} className="mx-auto text-radar-400" />
-        </motion.div>
+        <motion.p variants={fadeUp} custom={0} className="text-sm font-semibold tracking-wide text-radar-400 uppercase">
+          Comece agora
+        </motion.p>
         <motion.h2
           variants={fadeUp}
           custom={1}
-          className="mt-6 font-display text-3xl font-bold tracking-tight text-white"
+          className="mt-5 font-display text-4xl font-bold tracking-tight text-white leading-tight"
         >
-          Pare de perder tempo buscando vagas
+          O proximo capitulo da sua
+          <br />
+          carreira comeca aqui.
         </motion.h2>
-        <motion.p variants={fadeUp} custom={2} className="mt-4 text-ink-faint">
-          Junte-se a quem ja encontrou a vaga certa com menos esforco. Gratis para comecar.
+        <motion.p variants={fadeUp} custom={2} className="mt-5 text-lg text-radar-200/70 leading-relaxed">
+          Milhares de vagas atualizadas. Alertas personalizados.
+          <br />
+          Tracking de candidaturas. Tudo gratis.
         </motion.p>
-        <motion.div variants={fadeUp} custom={3} className="mt-8">
+        <motion.div variants={fadeUp} custom={3} className="mt-10">
           <Link
             to="/register"
-            className="group inline-flex items-center gap-2 rounded-xl bg-radar-500 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-radar-500/30 transition-all hover:bg-radar-400 hover:shadow-xl"
+            className="group inline-flex items-center gap-2.5 rounded-xl bg-white px-8 py-4 text-sm font-bold text-radar-950 shadow-xl shadow-black/20 transition-all hover:bg-radar-50 hover:shadow-2xl hover:scale-[1.02]"
           >
             Criar conta gratis
-            <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+            <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
           </Link>
         </motion.div>
+        <motion.p variants={fadeUp} custom={4} className="mt-6 text-xs text-radar-300/50">
+          Sem cartao de credito. Sem compromisso. Cancele quando quiser.
+        </motion.p>
       </motion.div>
     </section>
   )
