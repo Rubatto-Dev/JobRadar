@@ -151,3 +151,37 @@ class TestVerifyEmail:
         token = create_verification_token(user.id, "email_verify")
         await service.verify_email(token)
         assert user.email_verified is True
+
+
+class TestGoogleAuth:
+    async def test_google_auth_new_user_should_create_and_return_tokens(self) -> None:
+        service = _make_service()
+        result = await service.google_auth(
+            google_id="google-123",
+            email="new@example.com",
+            name="New User",
+        )
+        assert result.access_token
+        assert result.refresh_token
+
+    async def test_google_auth_existing_user_should_return_tokens(self) -> None:
+        user = FakeUser(email="existing@example.com", google_id="google-456", email_verified=True)
+        service = _make_service(users=[user])
+        result = await service.google_auth(
+            google_id="google-456",
+            email="existing@example.com",
+            name="Existing User",
+        )
+        assert result.access_token
+        assert result.refresh_token
+
+    async def test_google_auth_should_link_google_id_to_existing_email_user(self) -> None:
+        user = FakeUser(email="user@example.com", google_id=None, email_verified=True)
+        service = _make_service(users=[user])
+        result = await service.google_auth(
+            google_id="google-789",
+            email="user@example.com",
+            name="User",
+        )
+        assert result.access_token
+        assert user.google_id == "google-789"

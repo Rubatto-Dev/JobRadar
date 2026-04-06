@@ -88,5 +88,9 @@ class ResetPasswordRequest(BaseModel):
         return v
 
 
+class GoogleAuthRequest(BaseModel):
+    credential: str
+
+
 class MessageResponse(BaseModel):
     message: str

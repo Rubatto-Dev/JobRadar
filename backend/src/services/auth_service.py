@@ -132,6 +132,29 @@ class AuthService:
         await self._user_repo.update(user_id, password_hash=hash_password(password))
         await logger.ainfo("Password reset", user_id=str(user_id))
 
+    async def google_auth(self, google_id: str, email: str, name: str) -> TokenPair:
+        # Check if user exists by google_id first
+        user = await self._user_repo.get_by_email(email)
+
+        if user is None:
+            # New user -- create with google_id, no password, email already verified
+            user = await self._user_repo.create(
+                email=email,
+                name=name,
+                google_id=google_id,
+                email_verified=True,
+                lgpd_consent_at=datetime.now(UTC),
+            )
+            await logger.ainfo("Google OAuth: new user created", user_id=str(user.id))
+        elif user.google_id is None:
+            # Existing email user without google linked -- link it
+            await self._user_repo.update(user.id, google_id=google_id, email_verified=True)
+            await logger.ainfo("Google OAuth: linked to existing user", user_id=str(user.id))
+
+        access_token = create_access_token(user.id)
+        refresh_token = create_refresh_token(user.id)
+        return TokenPair(access_token=access_token, refresh_token=refresh_token)
+
     async def blacklist_refresh_token(self, refresh_token: str) -> None:
         payload = decode_token(refresh_token)
         jti = payload.get("jti", "")

@@ -18,6 +18,7 @@ from src.core.exceptions import (
 from src.repositories.user_repository import UserRepository
 from src.schemas.auth import (
     ForgotPasswordRequest,
+    GoogleAuthRequest,
     LoginRequest,
     MessageResponse,
     RefreshRequest,
@@ -127,3 +128,26 @@ async def reset_password(
     except DomainError as e:
         raise _handle(e) from e
     return MessageResponse(message="Password reset successfully")
+
+
+@router.post("/google", response_model=TokenPair)
+async def google_auth(data: GoogleAuthRequest, service: AuthService = Depends(_get_auth_service)) -> TokenPair:
+    try:
+        from google.auth.transport import requests as google_requests
+        from google.oauth2 import id_token as google_id_token
+
+        from src.core.config import get_settings
+
+        settings = get_settings()
+        idinfo: dict[str, str] = google_id_token.verify_oauth2_token(  # type: ignore[no-untyped-call]
+            data.credential, google_requests.Request(), settings.GOOGLE_CLIENT_ID
+        )
+        return await service.google_auth(
+            google_id=idinfo["sub"],
+            email=idinfo["email"],
+            name=idinfo.get("name", idinfo["email"]),
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail="Invalid Google token") from e
+    except DomainError as e:
+        raise _handle(e) from e
