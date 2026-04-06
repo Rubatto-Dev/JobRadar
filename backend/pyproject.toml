@@ -83,6 +83,7 @@ ignore = [
     "TC002",   # third-party imports needed at runtime for FastAPI Depends
     "B008",    # Depends() in default args is FastAPI convention
     "ARG002",  # unused args in protocol/fake implementations
+    "UP046",   # Generic[T] subclass needed for Pydantic BaseModel generics
 ]
 
 [tool.mypy]
