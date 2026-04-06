@@ -42,3 +42,9 @@ class TokenBlacklistedError(DomainError):
 class LGPDConsentRequiredError(DomainError):
     def __init__(self) -> None:
         super().__init__("LGPD consent is required")
+
+
+class RateLimitExceededError(DomainError):
+    def __init__(self, retry_after: int = 60) -> None:
+        self.retry_after = retry_after
+        super().__init__(f"Rate limit exceeded. Retry after {retry_after} seconds")
