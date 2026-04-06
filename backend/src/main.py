@@ -6,8 +6,11 @@ import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.api.routers.alerts import router as alerts_router
+from src.api.routers.applications import router as applications_router
 from src.api.routers.areas import router as areas_router
 from src.api.routers.auth import router as auth_router
+from src.api.routers.favorites import router as favorites_router
 from src.api.routers.jobs import router as jobs_router
 from src.api.routers.preferences import router as preferences_router
 from src.api.routers.search_history import router as search_history_router
@@ -51,6 +54,9 @@ def create_app() -> FastAPI:
     application.include_router(jobs_router)
     application.include_router(preferences_router)
     application.include_router(search_history_router)
+    application.include_router(favorites_router)
+    application.include_router(applications_router)
+    application.include_router(alerts_router)
 
     @application.get("/health")
     async def health() -> dict[str, Any]:
