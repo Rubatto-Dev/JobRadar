@@ -6,6 +6,7 @@ import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.api.routers.auth import router as auth_router
 from src.core.config import get_settings
 from src.core.logging import setup_logging
 
@@ -38,6 +39,8 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    application.include_router(auth_router)
 
     @application.get("/health")
     async def health() -> dict[str, Any]:

@@ -10,6 +10,7 @@ dependencies = [
     "asyncpg>=0.30",
     "alembic>=1.13",
     "pydantic-settings>=2.0",
+    "pydantic[email]>=2.0",
     "redis>=5.0",
     "celery[redis]>=5.4",
     "python-jose[cryptography]>=3.3",
@@ -34,6 +35,7 @@ dev = [
     "fakeredis>=2.25",
     "ruff>=0.6",
     "mypy>=1.11",
+    "types-python-jose>=3.5",
 ]
 
 [build-system]
@@ -67,10 +69,25 @@ target-version = "py312"
 line-length = 120
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "N", "UP", "S", "B", "A", "C4", "DTZ", "T20", "ICN", "RET", "SIM", "TCH", "ARG", "PTH", "ERA"]
-ignore = ["S101", "TC003"]
+select = ["E", "F", "W", "I", "N", "UP", "S", "B", "A", "C4", "DTZ", "T20", "ICN", "RET", "SIM", "TC", "ARG", "PTH", "ERA"]
+ignore = [
+    "S101",    # assert in tests
+    "S105",    # hardcoded password (false positive on "bearer" token_type)
+    "S106",    # hardcoded password in tests
+    "S107",    # hardcoded password default (false positive on token_type param)
+    "TC003",   # stdlib imports needed at runtime for SQLAlchemy
+    "TC001",   # local imports needed at runtime for Protocol
+    "TC002",   # third-party imports needed at runtime for FastAPI Depends
+    "B008",    # Depends() in default args is FastAPI convention
+    "ARG002",  # unused args in protocol/fake implementations
+]
 
 [tool.mypy]
 python_version = "3.12"
 strict = true
 plugins = ["pydantic.mypy"]
+
+[dependency-groups]
+dev = [
+    "types-python-jose>=3.5.0.20260402",
+]
