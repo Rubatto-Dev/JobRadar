@@ -46,6 +46,35 @@ services:
       retries: 5
     restart: unless-stopped
 
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: celery -A src.workers.celery_app worker -l info -Q collection,maintenance -c 2
+    env_file:
+      - .env
+    volumes:
+      - ./backend/src:/app/src
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: celery -A src.workers.celery_app beat -l info
+    env_file:
+      - .env
+    volumes:
+      - ./backend/src:/app/src
+    depends_on:
+      - worker
+    restart: unless-stopped
+
 volumes:
   pgdata:
   redisdata:
