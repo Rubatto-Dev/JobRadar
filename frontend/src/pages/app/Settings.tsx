@@ -14,7 +14,7 @@ import { useNavigate } from 'react-router-dom'
 import { fadeUp, stagger } from '../../lib/motion'
 import { useAuth } from '../../hooks/useAuth'
 import { useToast } from '../../hooks/useToast'
-import { api, type Preferences } from '../../services/api'
+import { api } from '../../services/api'
 
 const MODALITY_OPTIONS = [
   { value: 'presencial', label: 'Presencial' },

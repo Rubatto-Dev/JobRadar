@@ -50,7 +50,7 @@ function StatCard({ stat, i }: { stat: StatItem; i: number }) {
   )
 }
 
-function JobCard({ job, i }: { job: { id: string; title: string; company: string }; i: number }) {
+function JobCard({ job }: { job: { id: string; title: string; company: string } }) {
   return (
     <Link
       to={`/jobs/${job.id}`}
@@ -121,7 +121,7 @@ export default function Dashboard() {
           <div className="mt-4 space-y-3">
             {data.recommended_jobs.length > 0 ? (
               data.recommended_jobs.map((job, i) => (
-                <JobCard key={job.id} job={job} i={i} />
+                <JobCard key={job.id} job={job} />
               ))
             ) : (
               <div className="rounded-xl border border-border bg-white p-8 text-center">
