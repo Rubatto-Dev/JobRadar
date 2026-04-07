@@ -4,13 +4,17 @@ import {
   Heart,
   LayoutDashboard,
   LogOut,
+  Moon,
   Radar,
   Search,
   Settings,
+  Sun,
   User,
 } from 'lucide-react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import { useTheme } from '../../hooks/useTheme'
+import CommandPalette from '../ui/CommandPalette'
 
 const NAV_ITEMS = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -27,6 +31,7 @@ const BOTTOM_ITEMS = [
 export default function AppShell() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
+  const { isDark, toggle: toggleTheme } = useTheme()
 
   function handleLogout() {
     logout()
@@ -34,9 +39,10 @@ export default function AppShell() {
   }
 
   return (
-    <div className="flex h-screen bg-surface">
+    <div className="flex h-screen bg-surface dark:bg-[#0f1117]">
+      <CommandPalette />
       {/* Sidebar */}
-      <aside className="flex w-[240px] flex-shrink-0 flex-col border-r border-border bg-white">
+      <aside className="flex w-[240px] flex-shrink-0 flex-col border-r border-border bg-white dark:bg-[#13141b]">
         {/* Logo */}
         <div className="flex h-16 items-center gap-2.5 border-b border-border px-5">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-radar-600 text-white">
@@ -96,10 +102,25 @@ export default function AppShell() {
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Topbar */}
-        <header className="flex h-16 items-center justify-between border-b border-border bg-white px-6">
-          <div />
-          <div className="flex items-center gap-3">
-            <button className="relative rounded-lg p-2 text-ink-muted transition-colors hover:bg-surface-alt hover:text-ink">
+        <header className="flex h-16 items-center justify-between border-b border-border bg-white dark:bg-[#13141b] px-6">
+          {/* Cmd+K hint */}
+          <button
+            onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
+            className="flex items-center gap-2 rounded-lg border border-border bg-surface-alt/50 px-3 py-1.5 text-xs text-ink-faint transition-all hover:border-border-strong hover:text-ink-muted dark:bg-gray-800/50 dark:border-gray-700"
+          >
+            <Search size={14} />
+            Buscar comandos...
+            <kbd className="ml-2 rounded border border-border px-1.5 py-0.5 font-mono text-[10px] dark:border-gray-600">⌘K</kbd>
+          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleTheme}
+              className="rounded-lg p-2 text-ink-muted transition-colors hover:bg-surface-alt hover:text-ink dark:hover:bg-gray-800"
+              title={isDark ? 'Modo claro' : 'Modo escuro'}
+            >
+              {isDark ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+            <button className="relative rounded-lg p-2 text-ink-muted transition-colors hover:bg-surface-alt hover:text-ink dark:hover:bg-gray-800">
               <Bell size={18} />
               <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-radar-500" />
             </button>
