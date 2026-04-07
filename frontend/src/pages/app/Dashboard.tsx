@@ -120,7 +120,7 @@ export default function Dashboard() {
           </div>
           <div className="mt-4 space-y-3">
             {data.recommended_jobs.length > 0 ? (
-              data.recommended_jobs.map((job, i) => (
+              data.recommended_jobs.map((job) => (
                 <JobCard key={job.id} job={job} />
               ))
             ) : (
