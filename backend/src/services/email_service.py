@@ -17,7 +17,7 @@ class ResendEmailService:
             url = f"{settings.FRONTEND_URL}/verify-email?token={token}"
             resend.Emails.send(
                 {
-                    "from": "JobRadar <noreply@jobradar.com.br>",
+                    "from": settings.EMAIL_FROM,
                     "to": email,
                     "subject": "Confirme seu email - JobRadar",
                     "html": f'<p>Clique <a href="{url}">aqui</a> para confirmar.</p>',
@@ -35,7 +35,7 @@ class ResendEmailService:
             url = f"{settings.FRONTEND_URL}/reset-password?token={token}"
             resend.Emails.send(
                 {
-                    "from": "JobRadar <noreply@jobradar.com.br>",
+                    "from": settings.EMAIL_FROM,
                     "to": email,
                     "subject": "Redefinir senha - JobRadar",
                     "html": f'<p>Clique <a href="{url}">aqui</a> para redefinir.</p>',
@@ -52,7 +52,7 @@ class ResendEmailService:
             resend.api_key = settings.RESEND_API_KEY
             resend.Emails.send(
                 {
-                    "from": "JobRadar <noreply@jobradar.com.br>",
+                    "from": settings.EMAIL_FROM,
                     "to": email,
                     "subject": subject,
                     "html": html,

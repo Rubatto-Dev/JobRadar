@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi import HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.responses import Response
+from starlette.responses import JSONResponse, Response
 
 from src.core.redis import get_redis
 
@@ -30,23 +30,26 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         path = request.url.path
         ip = request.client.host if request.client else "unknown"
 
-        # Login endpoint: strict rate limiting (5 per 15 min per IP)
-        if path == "/api/v1/auth/login" and request.method == "POST":
-            await _check_rate(f"login:{ip}", LOGIN_LIMIT, LOGIN_WINDOW)
+        try:
+            # Login endpoint: strict rate limiting (5 per 15 min per IP)
+            if path == "/api/v1/auth/login" and request.method == "POST":
+                await _check_rate(f"login:{ip}", LOGIN_LIMIT, LOGIN_WINDOW)
 
-        # Auth endpoints (register, forgot, etc): moderate limiting
-        elif path.startswith("/api/v1/auth/") and request.method == "POST":
-            await _check_rate(f"auth:{ip}", GLOBAL_ANON_LIMIT, GLOBAL_ANON_WINDOW)
+            # Auth endpoints (register, forgot, etc): moderate limiting
+            elif path.startswith("/api/v1/auth/") and request.method == "POST":
+                await _check_rate(f"auth:{ip}", GLOBAL_ANON_LIMIT, GLOBAL_ANON_WINDOW)
 
-        # Authenticated endpoints
-        elif path.startswith("/api/v1/") and "authorization" in {k.lower() for k in request.headers}:
-            auth = request.headers.get("authorization", "")
-            # Use token hash for per-user limiting
-            token_key = auth[-8:] if len(auth) > 8 else ip
-            await _check_rate(f"user:{token_key}", GLOBAL_AUTH_LIMIT, GLOBAL_AUTH_WINDOW)
+            # Authenticated endpoints
+            elif path.startswith("/api/v1/") and "authorization" in {k.lower() for k in request.headers}:
+                auth = request.headers.get("authorization", "")
+                token_key = auth[-8:] if len(auth) > 8 else ip
+                await _check_rate(f"user:{token_key}", GLOBAL_AUTH_LIMIT, GLOBAL_AUTH_WINDOW)
 
-        # Other API endpoints (anonymous)
-        elif path.startswith("/api/v1/"):
-            await _check_rate(f"anon:{ip}", GLOBAL_ANON_LIMIT, GLOBAL_ANON_WINDOW)
+            # Other API endpoints (anonymous)
+            elif path.startswith("/api/v1/"):
+                await _check_rate(f"anon:{ip}", GLOBAL_ANON_LIMIT, GLOBAL_ANON_WINDOW)
+
+        except HTTPException as e:
+            return JSONResponse(status_code=e.status_code, content={"detail": e.detail})
 
         return await call_next(request)

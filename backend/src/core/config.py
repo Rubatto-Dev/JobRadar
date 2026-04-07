@@ -25,8 +25,11 @@ class Settings(BaseSettings):
     RESEND_API_KEY: str
     GOOGLE_CLIENT_ID: str
 
+    # Email
+    EMAIL_FROM: str = "JobRadar <onboarding@resend.dev>"
+
     # App
-    FRONTEND_URL: str = "http://localhost:5173"
+    FRONTEND_URL: str = "http://localhost:3000"
     CORS_ORIGINS: list[str] = []
     DEBUG: bool = False
 
