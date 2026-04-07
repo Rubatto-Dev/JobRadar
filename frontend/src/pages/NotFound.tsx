@@ -28,7 +28,7 @@ export default function NotFound() {
         </motion.p>
         <motion.div variants={fadeUp} custom={2} className="mt-8">
           <Link
-            to="/dashboard"
+            to="/"
             className="inline-flex items-center gap-2 rounded-xl bg-radar-600 px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-radar-700 no-underline"
           >
             <ArrowLeft size={16} />

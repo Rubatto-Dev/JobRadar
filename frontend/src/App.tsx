@@ -22,11 +22,12 @@ import ResetPassword from './pages/auth/ResetPassword'
 import VerifyEmail from './pages/auth/VerifyEmail'
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
+const basename = import.meta.env.BASE_URL.replace(/\/$/, '')
 
 export default function App() {
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <AuthProvider>
         <ToastProvider>
           <ErrorBoundary>
