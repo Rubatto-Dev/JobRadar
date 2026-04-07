@@ -4,13 +4,16 @@ import {
   Heart,
   LayoutDashboard,
   LogOut,
+  Menu,
   Moon,
   Radar,
   Search,
   Settings,
   Sun,
   User,
+  X,
 } from 'lucide-react'
+import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { useTheme } from '../../hooks/useTheme'
@@ -32,6 +35,7 @@ export default function AppShell() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const { isDark, toggle: toggleTheme } = useTheme()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   function handleLogout() {
     logout()
@@ -41,8 +45,14 @@ export default function AppShell() {
   return (
     <div className="flex h-screen bg-surface dark:bg-[#0f1117]">
       <CommandPalette />
+
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-40 bg-black/40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
+
       {/* Sidebar */}
-      <aside className="flex w-[240px] flex-shrink-0 flex-col border-r border-border bg-white dark:bg-[#13141b]">
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[240px] flex-shrink-0 flex-col border-r border-border bg-white dark:bg-[#13141b] transition-transform lg:relative lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         {/* Logo */}
         <div className="flex h-16 items-center gap-2.5 border-b border-border px-5">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-radar-600 text-white">
@@ -57,6 +67,7 @@ export default function AppShell() {
             <NavLink
               key={item.to}
               to={item.to}
+              onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
                 `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
                   isActive
@@ -102,7 +113,16 @@ export default function AppShell() {
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Topbar */}
-        <header className="flex h-16 items-center justify-between border-b border-border bg-white dark:bg-[#13141b] px-6">
+        <header className="flex h-16 items-center justify-between border-b border-border bg-white dark:bg-[#13141b] px-4 lg:px-6">
+          <div className="flex items-center gap-3">
+          {/* Mobile menu button */}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="rounded-lg p-2 text-ink-muted hover:bg-surface-alt lg:hidden"
+            aria-label="Menu"
+          >
+            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
           {/* Cmd+K hint */}
           <button
             onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
@@ -112,6 +132,7 @@ export default function AppShell() {
             Buscar comandos...
             <kbd className="ml-2 rounded border border-border px-1.5 py-0.5 font-mono text-[10px] dark:border-gray-600">⌘K</kbd>
           </button>
+          </div>
           <div className="flex items-center gap-2">
             <button
               onClick={toggleTheme}

@@ -91,6 +91,14 @@ async def verify_email(token: str, service: AuthService = Depends(_get_auth_serv
     return MessageResponse(message="Email verified successfully")
 
 
+@router.post("/resend-verification", response_model=MessageResponse)
+async def resend_verification(
+    data: ForgotPasswordRequest, service: AuthService = Depends(_get_auth_service)
+) -> MessageResponse:
+    await service.resend_verification(data.email)
+    return MessageResponse(message="If the email exists and is unverified, a verification link has been sent")
+
+
 @router.post("/forgot-password", response_model=MessageResponse)
 async def forgot_password(
     data: ForgotPasswordRequest, service: AuthService = Depends(_get_auth_service)
@@ -110,6 +118,15 @@ async def reset_password(
     return MessageResponse(message="Password reset successfully")
 
 
+@router.post("/logout", response_model=MessageResponse)
+async def logout(data: RefreshRequest, service: AuthService = Depends(_get_auth_service)) -> MessageResponse:
+    try:
+        await service.blacklist_refresh_token(data.refresh_token)
+    except DomainError as e:
+        raise _handle(e) from e
+    return MessageResponse(message="Logged out successfully")
+
+
 @router.post("/google", response_model=TokenPair)
 async def google_auth(data: GoogleAuthRequest, service: AuthService = Depends(_get_auth_service)) -> TokenPair:
     try:
@@ -127,7 +144,9 @@ async def google_auth(data: GoogleAuthRequest, service: AuthService = Depends(_g
             email=idinfo["email"],
             name=idinfo.get("name", idinfo["email"]),
         )
-    except ValueError as e:
+    except (ValueError, KeyError) as e:
         raise HTTPException(status_code=401, detail="Invalid Google token") from e
     except DomainError as e:
         raise _handle(e) from e
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=401, detail="Google authentication failed") from e

@@ -1,13 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { api, type UserProfile } from '../services/api'
+import { api, type LoginResponse, type UserProfile } from '../services/api'
 
 interface AuthState {
   user: UserProfile | null
   loading: boolean
   isAuthenticated: boolean
   login: (email: string, password: string) => Promise<void>
-  register: (name: string, email: string, password: string) => Promise<void>
+  loginWithTokens: (tokens: LoginResponse) => Promise<void>
   logout: () => void
   refreshUser: () => Promise<void>
 }
@@ -29,6 +29,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const profile = await api.user.getProfile()
       setUser(profile)
     } catch {
+      // Try refresh token before giving up
+      const refreshToken = localStorage.getItem('refresh_token')
+      if (refreshToken) {
+        try {
+          const tokens = await api.auth.refreshToken(refreshToken)
+          localStorage.setItem('access_token', tokens.access_token)
+          localStorage.setItem('refresh_token', tokens.refresh_token)
+          const profile = await api.user.getProfile()
+          setUser(profile)
+          return
+        } catch {
+          // Refresh also failed
+        }
+      }
       setUser(null)
       localStorage.removeItem('access_token')
       localStorage.removeItem('refresh_token')
@@ -49,19 +63,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(profile)
   }, [])
 
-  const register = useCallback(async (name: string, email: string, password: string) => {
-    await api.auth.register({ name, email, password, lgpd_consent: true })
+  const loginWithTokens = useCallback(async (tokens: LoginResponse) => {
+    localStorage.setItem('access_token', tokens.access_token)
+    localStorage.setItem('refresh_token', tokens.refresh_token)
+    const profile = await api.user.getProfile()
+    setUser(profile)
   }, [])
 
   const logout = useCallback(() => {
+    const refreshToken = localStorage.getItem('refresh_token')
+    if (refreshToken) {
+      api.auth.logout(refreshToken).catch(() => {})
+    }
     localStorage.removeItem('access_token')
     localStorage.removeItem('refresh_token')
     setUser(null)
   }, [])
 
   const value = useMemo(
-    () => ({ user, loading, isAuthenticated: !!user, login, register, logout, refreshUser }),
-    [user, loading, login, register, logout, refreshUser]
+    () => ({ user, loading, isAuthenticated: !!user, login, loginWithTokens, logout, refreshUser }),
+    [user, loading, login, loginWithTokens, logout, refreshUser]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

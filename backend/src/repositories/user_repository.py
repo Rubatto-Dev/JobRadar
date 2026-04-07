@@ -36,7 +36,7 @@ class UserRepository:
             raise ValueError(msg)
         for key, value in kwargs.items():
             setattr(user, key, value)
-        user.updated_at = datetime.now(UTC)
+        user.updated_at = datetime.now(UTC).replace(tzinfo=None)
         await self._session.flush()
         await self._session.refresh(user)
         return user

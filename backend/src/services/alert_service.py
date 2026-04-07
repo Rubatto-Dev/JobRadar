@@ -64,7 +64,7 @@ class AlertService:
         subject = "JobRadar: Novas vagas para voce" if locale == "pt-br" else "JobRadar: New jobs for you"
         html = f"<h2>{subject}</h2><pre>{job_list}</pre>"
 
-        await self._email.send_verification_email(user_email, html)
+        await self._email.send_alert_email(user_email, subject, html)
         await self._alert_log_repo.create(
             user_id=user_id,
             job_ids=[str(getattr(j, "id", "")) for j in jobs],

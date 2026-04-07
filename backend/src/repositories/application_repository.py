@@ -5,6 +5,7 @@ from uuid import UUID
 
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from src.models.application import Application
 
@@ -64,6 +65,9 @@ class ApplicationRepository:
 
     async def list_all_by_user(self, user_id: UUID) -> list[Application]:
         result = await self._session.execute(
-            select(Application).where(Application.user_id == user_id).order_by(Application.applied_at.desc())
+            select(Application)
+            .options(joinedload(Application.job))
+            .where(Application.user_id == user_id)
+            .order_by(Application.applied_at.desc())
         )
         return list(result.scalars().all())

@@ -14,13 +14,13 @@ class ResendEmailService:
             import resend
 
             resend.api_key = settings.RESEND_API_KEY
+            url = f"{settings.FRONTEND_URL}/verify-email?token={token}"
             resend.Emails.send(
                 {
                     "from": "JobRadar <noreply@jobradar.com.br>",
                     "to": email,
                     "subject": "Confirme seu email - JobRadar",
-                    "html": f'<p>Clique <a href="https://app.jobradar.com.br/verify?token={token}">'
-                    f"aqui</a> para confirmar.</p>",
+                    "html": f'<p>Clique <a href="{url}">aqui</a> para confirmar.</p>',
                 }
             )
         except Exception:  # noqa: BLE001
@@ -32,14 +32,31 @@ class ResendEmailService:
             import resend
 
             resend.api_key = settings.RESEND_API_KEY
+            url = f"{settings.FRONTEND_URL}/reset-password?token={token}"
             resend.Emails.send(
                 {
                     "from": "JobRadar <noreply@jobradar.com.br>",
                     "to": email,
                     "subject": "Redefinir senha - JobRadar",
-                    "html": f'<p>Clique <a href="https://app.jobradar.com.br/reset-password?token={token}">'
-                    f"aqui</a> para redefinir.</p>",
+                    "html": f'<p>Clique <a href="{url}">aqui</a> para redefinir.</p>',
                 }
             )
         except Exception:  # noqa: BLE001
             await logger.awarning("Failed to send reset password email", email=email)
+
+    async def send_alert_email(self, email: str, subject: str, html: str) -> None:
+        settings = get_settings()
+        try:
+            import resend
+
+            resend.api_key = settings.RESEND_API_KEY
+            resend.Emails.send(
+                {
+                    "from": "JobRadar <noreply@jobradar.com.br>",
+                    "to": email,
+                    "subject": subject,
+                    "html": html,
+                }
+            )
+        except Exception:  # noqa: BLE001
+            await logger.awarning("Failed to send alert email", email=email)

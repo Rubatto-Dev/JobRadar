@@ -18,6 +18,7 @@ app.conf.update(
     task_routes={
         "src.workers.tasks.collection.*": {"queue": "collection"},
         "src.workers.tasks.maintenance.*": {"queue": "maintenance"},
+        "src.workers.tasks.alerts.*": {"queue": "maintenance"},
     },
     beat_schedule={
         "collect-all-sources-every-2h": {
@@ -27,6 +28,10 @@ app.conf.update(
         "expire-stale-jobs-daily": {
             "task": "src.workers.tasks.maintenance.expire_stale_jobs",
             "schedule": crontab(minute=0, hour=3),  # 3 AM daily
+        },
+        "send-daily-alerts": {
+            "task": "src.workers.tasks.alerts.send_daily_alerts",
+            "schedule": crontab(minute=0, hour=8),  # 8 AM daily
         },
     },
 )

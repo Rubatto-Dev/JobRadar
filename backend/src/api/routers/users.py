@@ -57,5 +57,38 @@ async def delete_account(
 async def export_data(
     user_id: UUID = Depends(get_current_user_id),
     service: UserService = Depends(_get_user_service),
+    db: AsyncSession = Depends(get_db),
 ) -> UserExport:
-    return await service.export_data(user_id)
+    from sqlalchemy import func, select
+
+    from src.models.application import Application
+    from src.models.favorite import Favorite
+    from src.models.search_history import SearchHistory
+    from src.repositories.preference_repository import PreferenceRepository
+
+    profile = await service.get_profile(user_id)
+
+    pref_repo = PreferenceRepository(db)
+    pref = await pref_repo.get_by_user_id(user_id)
+    pref_data = None
+    if pref:
+        pref_data = {
+            "modalities": pref.modalities or [],
+            "locations": pref.locations or [],
+            "seniority_levels": pref.seniority_levels or [],
+            "keywords": pref.keywords or [],
+            "alert_frequency": pref.alert_frequency,
+            "alerts_enabled": pref.alerts_enabled,
+        }
+
+    fav_count = (await db.execute(select(func.count()).select_from(Favorite).where(Favorite.user_id == user_id))).scalar() or 0
+    app_count = (await db.execute(select(func.count()).select_from(Application).where(Application.user_id == user_id))).scalar() or 0
+    search_count = (await db.execute(select(func.count()).select_from(SearchHistory).where(SearchHistory.user_id == user_id))).scalar() or 0
+
+    return UserExport(
+        profile=profile,
+        preferences=pref_data,
+        favorites_count=fav_count,
+        applications_count=app_count,
+        search_history_count=search_count,
+    )

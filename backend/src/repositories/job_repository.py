@@ -45,8 +45,12 @@ class JobRepository:
         stmt = select(Job).where(Job.is_active.is_(True))
 
         if query:
-            ts_query = func.plainto_tsquery("portuguese", query)
-            stmt = stmt.where(Job.search_vector.op("@@")(ts_query))
+            ts_query_pt = func.plainto_tsquery("portuguese", query)
+            ts_query_en = func.plainto_tsquery("english", query)
+            stmt = stmt.where(
+                Job.search_vector.op("@@")(ts_query_pt)
+                | Job.search_vector.op("@@")(ts_query_en)
+            )
 
         if filters.modality:
             stmt = stmt.where(Job.modality.in_(filters.modality))

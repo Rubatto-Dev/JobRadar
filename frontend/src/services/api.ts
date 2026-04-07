@@ -155,6 +155,35 @@ export const api = {
         body: JSON.stringify({ credential }),
       })
     },
+    logout(refresh_token: string) {
+      return request<{ message: string }>('/auth/logout', {
+        method: 'POST',
+        body: JSON.stringify({ refresh_token }),
+      })
+    },
+    verifyEmail(token: string) {
+      return request<{ message: string }>(`/auth/verify-email?token=${encodeURIComponent(token)}`, {
+        method: 'POST',
+      })
+    },
+    forgotPassword(email: string) {
+      return request<{ message: string }>('/auth/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+      })
+    },
+    resetPassword(token: string, password: string) {
+      return request<{ message: string }>('/auth/reset-password', {
+        method: 'POST',
+        body: JSON.stringify({ token, password }),
+      })
+    },
+    refreshToken(refresh_token: string) {
+      return request<LoginResponse>('/auth/refresh', {
+        method: 'POST',
+        body: JSON.stringify({ refresh_token }),
+      })
+    },
   },
 
   user: {

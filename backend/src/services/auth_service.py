@@ -55,7 +55,7 @@ class AuthService:
             name=data.name,
             password_hash=hash_password(data.password),
             locale=data.locale,
-            lgpd_consent_at=datetime.now(UTC),
+            lgpd_consent_at=datetime.now(UTC).replace(tzinfo=None),
         )
 
         token = create_verification_token(user.id, "email_verify", expires_hours=24)
@@ -78,7 +78,7 @@ class AuthService:
         if not user.email_verified:
             raise EmailNotVerifiedError
 
-        access_token = create_access_token(user.id)
+        access_token = create_access_token(user.id, is_admin=user.is_admin)
         refresh_token = create_refresh_token(user.id)
 
         await logger.ainfo("User logged in", user_id=str(user.id))
@@ -96,7 +96,12 @@ class AuthService:
             raise TokenBlacklistedError
 
         user_id = UUID(payload["sub"])
-        return create_access_token(user_id)
+        user = await self._user_repo.get_by_id(user_id)
+        if user is None:
+            raise InvalidTokenError("User not found")
+        if not user.is_active:
+            raise AccountDeactivatedError
+        return create_access_token(user_id, is_admin=user.is_admin)
 
     async def verify_email(self, token: str) -> None:
         payload = decode_token(token)
@@ -111,6 +116,14 @@ class AuthService:
 
         await self._user_repo.update(user_id, email_verified=True)
         await logger.ainfo("Email verified", user_id=str(user_id))
+
+    async def resend_verification(self, email: str) -> None:
+        user = await self._user_repo.get_by_email(email)
+        if user is None or user.email_verified:
+            return  # Generic response to prevent enumeration
+
+        token = create_verification_token(user.id, "email_verify", expires_hours=24)
+        await self._email.send_verification_email(email, token)
 
     async def forgot_password(self, email: str) -> None:
         user = await self._user_repo.get_by_email(email)
@@ -133,25 +146,25 @@ class AuthService:
         await logger.ainfo("Password reset", user_id=str(user_id))
 
     async def google_auth(self, google_id: str, email: str, name: str) -> TokenPair:
-        # Check if user exists by google_id first
         user = await self._user_repo.get_by_email(email)
 
         if user is None:
-            # New user -- create with google_id, no password, email already verified
             user = await self._user_repo.create(
                 email=email,
                 name=name,
                 google_id=google_id,
                 email_verified=True,
-                lgpd_consent_at=datetime.now(UTC),
+                lgpd_consent_at=datetime.now(UTC).replace(tzinfo=None),
             )
             await logger.ainfo("Google OAuth: new user created", user_id=str(user.id))
-        elif user.google_id is None:
-            # Existing email user without google linked -- link it
-            await self._user_repo.update(user.id, google_id=google_id, email_verified=True)
-            await logger.ainfo("Google OAuth: linked to existing user", user_id=str(user.id))
+        else:
+            if not user.is_active:
+                raise AccountDeactivatedError
+            if user.google_id is None:
+                await self._user_repo.update(user.id, google_id=google_id, email_verified=True)
+                await logger.ainfo("Google OAuth: linked to existing user", user_id=str(user.id))
 
-        access_token = create_access_token(user.id)
+        access_token = create_access_token(user.id, is_admin=user.is_admin)
         refresh_token = create_refresh_token(user.id)
         return TokenPair(access_token=access_token, refresh_token=refresh_token)
 

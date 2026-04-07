@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str
 
     # App
+    FRONTEND_URL: str = "http://localhost:5173"
     CORS_ORIGINS: list[str] = []
     DEBUG: bool = False
 

@@ -21,15 +21,17 @@ def verify_password(plain: str, hashed: str) -> bool:
     return bcrypt.checkpw(plain.encode(), hashed.encode())
 
 
-def create_access_token(user_id: uuid.UUID) -> str:
+def create_access_token(user_id: uuid.UUID, *, is_admin: bool = False) -> str:
     settings = get_settings()
     expires = datetime.now(UTC) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    claims = {
+    claims: dict[str, Any] = {
         "sub": str(user_id),
         "type": "access",
         "exp": expires,
         "iat": datetime.now(UTC),
     }
+    if is_admin:
+        claims["is_admin"] = True
     result: str = jwt.encode(claims, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
     return result
 

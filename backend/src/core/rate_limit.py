@@ -1,32 +1,52 @@
 from __future__ import annotations
 
-from src.core.exceptions import RateLimitExceededError
-from src.protocols.auth import RedisProtocol
+from fastapi import HTTPException, Request
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from starlette.responses import Response
 
-
-class RateLimiter:
-    def __init__(self, redis: RedisProtocol) -> None:
-        self._redis = redis
-
-    async def check(self, key: str, limit: int, window: int) -> int:
-        """Check rate limit. Returns remaining requests. Raises RateLimitExceededError if exceeded."""
-        counter_key = f"ratelimit:{key}"
-        current = await self._redis.get(counter_key)
-        count = int(current) if current else 0
-
-        if count >= limit:
-            raise RateLimitExceededError(retry_after=window)
-
-        await self._redis.set(counter_key, str(count + 1), ex=window)
-        return limit - count - 1
-
+from src.core.redis import get_redis
 
 # Preset configurations
 GLOBAL_AUTH_LIMIT = 100
 GLOBAL_AUTH_WINDOW = 60  # 1 min
 GLOBAL_ANON_LIMIT = 30
 GLOBAL_ANON_WINDOW = 60  # 1 min
-LOGIN_EMAIL_LIMIT = 5
-LOGIN_EMAIL_WINDOW = 900  # 15 min
-LOGIN_IP_LIMIT = 20
-LOGIN_IP_WINDOW = 900  # 15 min
+LOGIN_LIMIT = 5
+LOGIN_WINDOW = 900  # 15 min
+
+
+async def _check_rate(key: str, limit: int, window: int) -> None:
+    redis = get_redis()
+    full_key = f"ratelimit:{key}"
+    current = await redis.incr(full_key)
+    if current == 1:
+        await redis.expire(full_key, window)
+    if current > limit:
+        raise HTTPException(status_code=429, detail="Too many requests")
+
+
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        path = request.url.path
+        ip = request.client.host if request.client else "unknown"
+
+        # Login endpoint: strict rate limiting (5 per 15 min per IP)
+        if path == "/api/v1/auth/login" and request.method == "POST":
+            await _check_rate(f"login:{ip}", LOGIN_LIMIT, LOGIN_WINDOW)
+
+        # Auth endpoints (register, forgot, etc): moderate limiting
+        elif path.startswith("/api/v1/auth/") and request.method == "POST":
+            await _check_rate(f"auth:{ip}", GLOBAL_ANON_LIMIT, GLOBAL_ANON_WINDOW)
+
+        # Authenticated endpoints
+        elif path.startswith("/api/v1/") and "authorization" in {k.lower() for k in request.headers}:
+            auth = request.headers.get("authorization", "")
+            # Use token hash for per-user limiting
+            token_key = auth[-8:] if len(auth) > 8 else ip
+            await _check_rate(f"user:{token_key}", GLOBAL_AUTH_LIMIT, GLOBAL_AUTH_WINDOW)
+
+        # Other API endpoints (anonymous)
+        elif path.startswith("/api/v1/"):
+            await _check_rate(f"anon:{ip}", GLOBAL_ANON_LIMIT, GLOBAL_ANON_WINDOW)
+
+        return await call_next(request)

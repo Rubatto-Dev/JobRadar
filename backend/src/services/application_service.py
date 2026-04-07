@@ -65,7 +65,15 @@ class ApplicationService:
         apps = await self._repo.list_all_by_user(user_id)
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow(["status", "notes", "applied_at"])
+        writer.writerow(["title", "company", "url", "status", "notes", "applied_at"])
         for app in apps:
-            writer.writerow([app.status, app.notes or "", str(app.applied_at)])
+            job = getattr(app, "job", None)
+            writer.writerow([
+                getattr(job, "title", "") if job else "",
+                getattr(job, "company", "") if job else "",
+                getattr(job, "url", "") if job else "",
+                app.status,
+                app.notes or "",
+                str(app.applied_at),
+            ])
         return output.getvalue()

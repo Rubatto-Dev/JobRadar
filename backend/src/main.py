@@ -50,6 +50,10 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    from src.core.rate_limit import RateLimitMiddleware
+
+    application.add_middleware(RateLimitMiddleware)
+
     application.include_router(auth_router)
     application.include_router(users_router)
     application.include_router(areas_router)

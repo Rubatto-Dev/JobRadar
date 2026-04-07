@@ -4,11 +4,14 @@ from datetime import date
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.database import get_db
 from src.schemas.job import JobDetail, JobFilters, JobSummary
 from src.schemas.pagination import PaginatedResponse
+
+_optional_bearer = HTTPBearer(auto_error=False)
 
 router = APIRouter(prefix="/api/v1/jobs", tags=["jobs"])
 
@@ -28,6 +31,7 @@ async def search_jobs(
     offset: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=50),
     db: AsyncSession = Depends(get_db),
+    credentials: HTTPAuthorizationCredentials | None = Depends(_optional_bearer),
 ) -> PaginatedResponse[JobSummary]:
     from src.repositories.job_repository import JobRepository
     from src.services.job_search_service import JobSearchService
@@ -42,7 +46,26 @@ async def search_jobs(
         published_after=published_after,
     )
     service = JobSearchService(JobRepository(db))
-    return await service.search(q, filters, sort, order, offset, limit)
+    result = await service.search(q, filters, sort, order, offset, limit)
+
+    # Save search history for authenticated users
+    if q and credentials:
+        try:
+            from src.core.security import decode_token
+            from src.repositories.search_history_repository import SearchHistoryRepository
+
+            payload = decode_token(credentials.credentials)
+            if payload.get("type") == "access":
+                repo = SearchHistoryRepository(db)
+                await repo.create(
+                    user_id=UUID(payload["sub"]),
+                    query=q,
+                    filters=filters.model_dump(exclude_none=True),
+                )
+        except Exception:  # noqa: BLE001, S110
+            pass  # Best-effort, don't fail the search
+
+    return result
 
 
 @router.get("/{job_id}", response_model=JobDetail)

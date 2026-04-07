@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
 
 interface Command {
   id: string
@@ -29,6 +30,7 @@ export default function CommandPalette() {
   const [selected, setSelected] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
+  const { logout } = useAuth()
 
   const commands: Command[] = [
     { id: 'search', label: 'Buscar vagas', icon: Search, group: 'Navegacao', action: () => navigate('/jobs') },
@@ -55,8 +57,7 @@ export default function CommandPalette() {
       icon: LogOut,
       group: 'Conta',
       action: () => {
-        localStorage.removeItem('access_token')
-        localStorage.removeItem('refresh_token')
+        logout()
         navigate('/login')
       },
     },

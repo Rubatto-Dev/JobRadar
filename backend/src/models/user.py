@@ -31,11 +31,11 @@ class User(UUIDMixin, TimestampMixin, Base):
     lgpd_consent_at: Mapped[datetime | None] = mapped_column(nullable=True)
     google_id: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
 
-    preference: Mapped[UserPreference | None] = relationship(back_populates="user", uselist=False)
-    favorites: Mapped[list[Favorite]] = relationship(back_populates="user")
-    applications: Mapped[list[Application]] = relationship(back_populates="user")
-    search_history: Mapped[list[SearchHistory]] = relationship(back_populates="user")
-    alert_logs: Mapped[list[AlertLog]] = relationship(back_populates="user")
+    preference: Mapped[UserPreference | None] = relationship(back_populates="user", uselist=False, cascade="all, delete-orphan")
+    favorites: Mapped[list[Favorite]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    applications: Mapped[list[Application]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    search_history: Mapped[list[SearchHistory]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    alert_logs: Mapped[list[AlertLog]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
     __table_args__ = (
         Index("idx_user_email", "email", unique=True),
